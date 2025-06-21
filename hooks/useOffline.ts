@@ -12,43 +12,42 @@ interface OfflineState {
 
 export function useOffline() {
   const [state, setState] = useState<OfflineState>({
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
+    isOnline: true, // Start optimistically online
+    isOffline: false,
     wasOffline: false,
     lastOnlineAt: new Date(),
     downtime: 0
   })
 
   const [offlineStartTime, setOfflineStartTime] = useState<Date | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Ping function to verify actual connectivity
   const checkConnectivity = useCallback(async (): Promise<boolean> => {
     try {
-      // Try to fetch a small resource from the same origin
-      const response = await fetch('/favicon.ico', {
+      // Try to fetch a small resource from the same origin with timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+      
+      const response = await fetch('/api/health', {
         method: 'HEAD',
         cache: 'no-cache',
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
       return response.ok
     } catch {
-      // If fetch fails, try a reliable external endpoint
-      try {
-        const response = await fetch('https://www.google.com/favicon.ico', {
-          method: 'HEAD',
-          mode: 'no-cors',
-          cache: 'no-cache',
-        })
-        return true // If we reach here, we have connectivity
-      } catch {
-        return false
-      }
+      // If that fails, we're likely offline or having connectivity issues
+      // Don't fall back to external services to avoid unnecessary requests
+      return false
     }
   }, [])
 
-  const updateOnlineStatus = useCallback(async (navigatorOnline: boolean) => {
+  const updateOnlineStatus = useCallback(async (navigatorOnline: boolean, skipConnectivityCheck = false) => {
     if (navigatorOnline) {
-      // Browser says online, but verify with actual request
-      const isActuallyOnline = await checkConnectivity()
+      // Browser says online, but verify with actual request (unless skipped)
+      const isActuallyOnline = skipConnectivityCheck || await checkConnectivity()
       
       if (isActuallyOnline) {
         const now = new Date()
@@ -89,11 +88,17 @@ export function useOffline() {
         wasOffline: true
       }))
     }
-  }, [checkConnectivity, offlineStartTime])
+    
+    if (!isInitialized) {
+      setIsInitialized(true)
+    }
+  }, [checkConnectivity, offlineStartTime, isInitialized])
 
   useEffect(() => {
-    // Initial check
-    updateOnlineStatus(navigator.onLine)
+    // Initial check - trust navigator.onLine on first load if it says online
+    if (typeof navigator !== 'undefined') {
+      updateOnlineStatus(navigator.onLine, navigator.onLine) // Skip connectivity check if navigator says online
+    }
 
     const handleOnline = () => updateOnlineStatus(true)
     const handleOffline = () => updateOnlineStatus(false)
@@ -103,7 +108,7 @@ export function useOffline() {
 
     // Periodic connectivity check (every 30 seconds when online)
     const connectivityCheck = setInterval(async () => {
-      if (navigator.onLine) {
+      if (navigator.onLine && isInitialized) {
         const isActuallyOnline = await checkConnectivity()
         if (!isActuallyOnline && state.isOnline) {
           updateOnlineStatus(false)
@@ -116,7 +121,7 @@ export function useOffline() {
       window.removeEventListener('offline', handleOffline)
       clearInterval(connectivityCheck)
     }
-  }, [updateOnlineStatus, checkConnectivity, state.isOnline])
+  }, [updateOnlineStatus, checkConnectivity, state.isOnline, isInitialized])
 
   // Manual connectivity check function
   const refreshConnectivity = useCallback(async () => {
@@ -126,6 +131,7 @@ export function useOffline() {
   return {
     ...state,
     refreshConnectivity,
+    isInitialized,
     // Helper functions
     hasBeenOffline: state.wasOffline,
     downtimeFormatted: state.downtime > 0 ? formatDowntime(state.downtime) : null,

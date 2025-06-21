@@ -9,9 +9,14 @@ interface OfflineBannerProps {
 }
 
 export function OfflineBanner({ className = '' }: OfflineBannerProps) {
-  const { isOffline, isOnline, wasOffline, downtimeFormatted, refreshConnectivity } = useOffline()
+  const { isOffline, isOnline, wasOffline, downtimeFormatted, refreshConnectivity, isInitialized } = useOffline()
   const [showReconnectedMessage, setShowReconnectedMessage] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Don't show anything until the hook is properly initialized
+  if (!isInitialized) {
+    return null
+  }
 
   // Show reconnected message briefly when coming back online
   useEffect(() => {
@@ -91,7 +96,12 @@ export function OfflineBanner({ className = '' }: OfflineBannerProps) {
 
 // Enhanced network status component
 export function NetworkStatus() {
-  const { isOffline, isOnline } = useOffline()
+  const { isOffline, isOnline, isInitialized } = useOffline()
+
+  // Don't render until initialized to prevent false offline states
+  if (!isInitialized) {
+    return null
+  }
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
