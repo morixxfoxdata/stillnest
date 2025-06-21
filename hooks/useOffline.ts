@@ -95,6 +95,9 @@ export function useOffline() {
   }, [checkConnectivity, offlineStartTime, isInitialized])
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     // Initial check - trust navigator.onLine on first load if it says online
     if (typeof navigator !== 'undefined') {
       updateOnlineStatus(navigator.onLine, navigator.onLine) // Skip connectivity check if navigator says online
@@ -108,7 +111,7 @@ export function useOffline() {
 
     // Periodic connectivity check (every 30 seconds when online)
     const connectivityCheck = setInterval(async () => {
-      if (navigator.onLine && isInitialized) {
+      if (typeof navigator !== 'undefined' && navigator.onLine && isInitialized) {
         const isActuallyOnline = await checkConnectivity()
         if (!isActuallyOnline && state.isOnline) {
           updateOnlineStatus(false)
@@ -125,7 +128,9 @@ export function useOffline() {
 
   // Manual connectivity check function
   const refreshConnectivity = useCallback(async () => {
-    await updateOnlineStatus(navigator.onLine)
+    if (typeof navigator !== 'undefined') {
+      await updateOnlineStatus(navigator.onLine)
+    }
   }, [updateOnlineStatus])
 
   return {
