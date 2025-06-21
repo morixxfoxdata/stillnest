@@ -4,7 +4,6 @@ import './globals.css'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { ToastProvider } from '@/components/providers/ToastProvider'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
-import { NetworkStatus } from '@/components/ui/OfflineBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,7 +23,6 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <ToastProvider>
-              <NetworkStatus />
               {children}
             </ToastProvider>
           </AuthProvider>
