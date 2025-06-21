@@ -21,6 +21,12 @@ export function useOffline() {
 
   const [offlineStartTime, setOfflineStartTime] = useState<Date | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Client-side only effect to set mounted state
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Ping function to verify actual connectivity
   const checkConnectivity = useCallback(async (): Promise<boolean> => {
@@ -95,8 +101,8 @@ export function useOffline() {
   }, [checkConnectivity, offlineStartTime, isInitialized])
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
+    // Only run on client side after component is mounted
+    if (!isMounted || typeof window === 'undefined') return
     
     // Initial check - trust navigator.onLine on first load if it says online
     if (typeof navigator !== 'undefined') {
@@ -124,7 +130,7 @@ export function useOffline() {
       window.removeEventListener('offline', handleOffline)
       clearInterval(connectivityCheck)
     }
-  }, [updateOnlineStatus, checkConnectivity, state.isOnline, isInitialized])
+  }, [updateOnlineStatus, checkConnectivity, state.isOnline, isInitialized, isMounted])
 
   // Manual connectivity check function
   const refreshConnectivity = useCallback(async () => {
@@ -136,7 +142,7 @@ export function useOffline() {
   return {
     ...state,
     refreshConnectivity,
-    isInitialized,
+    isInitialized: isInitialized && isMounted,
     // Helper functions
     hasBeenOffline: state.wasOffline,
     downtimeFormatted: state.downtime > 0 ? formatDowntime(state.downtime) : null,

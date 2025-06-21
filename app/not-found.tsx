@@ -2,22 +2,57 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
-        <h2 className="text-2xl font-semibold text-foreground mb-4">
-          ページが見つかりません
-        </h2>
-        <p className="text-muted-foreground mb-8 max-w-md">
-          お探しのページは存在しないか、移動された可能性があります。
-        </p>
-        <Link
-          href="/"
-          className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          ホームに戻る
-        </Link>
-      </div>
-    </div>
+    <html>
+      <body>
+        <div style={{ 
+          minHeight: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          fontFamily: 'system-ui, sans-serif',
+          backgroundColor: '#ffffff'
+        }}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <h1 style={{ 
+              fontSize: '4rem', 
+              fontWeight: 'bold', 
+              marginBottom: '1rem',
+              color: '#000000'
+            }}>
+              404
+            </h1>
+            <h2 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '600', 
+              marginBottom: '1rem',
+              color: '#333333'
+            }}>
+              ページが見つかりません
+            </h2>
+            <p style={{ 
+              color: '#666666', 
+              marginBottom: '2rem',
+              maxWidth: '400px'
+            }}>
+              お探しのページは存在しないか、移動された可能性があります。
+            </p>
+            <Link
+              href="/"
+              style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                textDecoration: 'none',
+                borderRadius: '0.5rem',
+                fontWeight: '500'
+              }}
+            >
+              ホームに戻る
+            </Link>
+          </div>
+        </div>
+      </body>
+    </html>
   )
 }
